@@ -1,9 +1,26 @@
 {
-  "extends": ["airbnb", "prettier", "plugin:node/recommended"],
-  "plugins": ["prettier"],
+  "root": true,
+  "extends": [
+    "airbnb",
+    "airbnb-typescript",
+    "prettier",
+    "plugin:node/recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["prettier", "@typescript-eslint"],
   "parserOptions": {
+    "project": ["./tsconfig.json"],
     "ecmaVersion": "latest",
     "sourceType": "module"
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      }
+    }
   },
   "rules": {
     "prettier/prettier": [
@@ -12,6 +29,7 @@
       "endOfLine": "auto"
     }
   ],
+    "eslint-plugin-import/extensions": "off",
     "spaced-comment": "off",
     "no-console": "warn",
     "consistent-return": "off",

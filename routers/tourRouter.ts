@@ -5,15 +5,17 @@ import {
   createTour,
   updateTour,
   deleteTour,
-  checkID,
-  checkTourBody,
-} from '../controllers/tourHandlers.mjs';
+  getTourStats,
+  getMonthlyPlan,
+} from '../controllers/tourController';
 
 const tourRouter = express.Router();
 
-tourRouter.param('id', checkID);
+tourRouter.route('/').get(getAllTours).post(createTour);
 
-tourRouter.route('/').get(getAllTours).post(checkTourBody, createTour);
+tourRouter.route('/monthly-plan/:year').get(getMonthlyPlan);
+
+tourRouter.route('/tour-stats').get(getTourStats);
 
 tourRouter.route('/:id').get(getTourById).patch(updateTour).delete(deleteTour);
 
