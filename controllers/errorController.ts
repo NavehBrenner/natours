@@ -1,6 +1,13 @@
 import { CastError, Error } from 'mongoose';
 import AppError from '../utils/appError';
 import { Request, Response, NextFunction } from 'express';
+import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
+
+const handleJWTError = () =>
+  new AppError('Invalid token. please login again', 401);
+
+const handleJWTExpiredError = () =>
+  new AppError('Your token has expired! Please log in again', 401);
 
 const handleCastErrorDB = (err: CastError) => {
   const message = `Invalid ${err.path}: ${err.value}.`;
@@ -8,8 +15,9 @@ const handleCastErrorDB = (err: CastError) => {
 };
 
 const handleDuplicateFieldsDb = (err: any) => {
-  err;
-  const message = `Duplicate field value: ${err.keyValue.name}. Please use another value.`;
+  const message = `Duplicate field value: ${Object.entries(err.keyValue)
+    .map((ent) => `(${ent.join(': ')})`)
+    .join(',')}. Please use another value.`;
   return new AppError(message, 400);
 };
 
@@ -55,6 +63,8 @@ const globalErrorHandler = (
     if (err.name === 'CastError') error = handleCastErrorDB(err);
     if (err.code === 11000) error = handleDuplicateFieldsDb(err);
     if (err.name === 'ValidationError') error = handleValidationErrorDB(err);
+    if (err.name === 'JsonWebTokenError') error = handleJWTError();
+    if (err.name === 'TokenExpiredError') error = handleJWTExpiredError();
     sendErrorProd(error, res);
   }
 };

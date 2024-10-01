@@ -1,10 +1,11 @@
 import fs from 'fs';
 import mongoose, { ConnectOptions } from 'mongoose';
 import dotenv from 'dotenv';
-import Tour from '../../models/toursModel';
-import { prependListener } from 'process';
+import { Tour } from '../../models/toursModel';
 
-dotenv.config({ path: './../../config.env' });
+dotenv.config({
+  path: 'C:/Users/naven/Desktop/complete-node-bootcamp-master/4-natours/starter/config.env',
+});
 
 const DB = process.env.DATABASE!.replace(
   '<PASSWORD>',
@@ -24,7 +25,12 @@ mongoose
   .then(() => console.log('Connection Successful'));
 
 // read json file
-const tours = JSON.parse(fs.readFileSync('tours-simple.json', 'utf-8'));
+const tours = JSON.parse(
+  fs.readFileSync(
+    'C:/Users/naven/Desktop/complete-node-bootcamp-master/4-natours/starter/dev-data/data/tours.json',
+    'utf-8',
+  ),
+);
 
 console.log(tours);
 

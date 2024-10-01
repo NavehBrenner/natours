@@ -1,5 +1,15 @@
-import mongoose, { Document, model, Model, Schema } from 'mongoose';
+import { NextFunction } from 'express';
+import mongoose, { Document, model, Model, Query, Schema } from 'mongoose';
+import { ObjectId } from 'mongoose';
 import slugify from 'slugify';
+import { IUser, User } from './userModel';
+
+interface ILocation {
+  type: 'Point'; // Fixed value as per your enum
+  coordinates: [number, number]; // Typically [longitude, latitude]
+  address: string; // Address as a string
+  description?: string; // Optional description
+}
 
 interface ITour extends Document {
   slug: string;
@@ -15,9 +25,12 @@ interface ITour extends Document {
   summary: string;
   description: string;
   imageCover: string;
-  images: [string];
-  startDates: [Date];
+  images: string[];
+  startDates: Date[];
   createdAt: Date;
+  startLocation: ILocation;
+  locations: ILocation[];
+  guides: ObjectId[];
 }
 
 const tourSchema: Schema<ITour> = new Schema<ITour>(
@@ -91,6 +104,27 @@ const tourSchema: Schema<ITour> = new Schema<ITour>(
       select: false,
     },
     startDates: [Date],
+    startLocation: {
+      type: { type: String, default: 'Point', enum: ['Point'] },
+      coordinates: [Number],
+      address: String,
+      description: String,
+    },
+    locations: [
+      {
+        type: { type: String, default: 'Point', enum: ['Point'] },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number,
+      },
+    ],
+    guides: [
+      {
+        type: Schema.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   {
     toJSON: { virtuals: true },
@@ -102,10 +136,34 @@ tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
 });
 
+// virtual populate
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour',
+  localField: '_id',
+});
+
 tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
   next();
 });
+
+tourSchema.pre(/^find/, async function (next) {
+  (this as Query<ITour, ITour>).populate({
+    path: 'guides',
+    select: '-__v -passwordChangedAt',
+  });
+  next();
+});
+
+// ENBEDDING GUIDES TO TOUR
+// tourSchema.pre('save', async function (next) {
+//   const guidesPromises = this.guides.map(async (id) => User.findById(id));
+//   this.guides = (await Promise.all(guidesPromises)).filter(
+//     (guide) => guide != null,
+//   );
+//   next();
+// });
 
 const Tour: Model<ITour> = model('Tour', tourSchema);
 
