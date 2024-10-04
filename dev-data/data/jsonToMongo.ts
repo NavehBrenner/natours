@@ -1,7 +1,9 @@
 import fs from 'fs';
-import mongoose, { ConnectOptions } from 'mongoose';
+import mongoose, { ConnectOptions, Model } from 'mongoose';
 import dotenv from 'dotenv';
 import { Tour } from '../../models/toursModel';
+import { User } from '../../models/userModel';
+import { Review } from '../../models/reviewModel';
 
 dotenv.config({
   path: 'C:/Users/naven/Desktop/complete-node-bootcamp-master/4-natours/starter/config.env',
@@ -24,19 +26,14 @@ mongoose
   .connect(DB, clientOptions)
   .then(() => console.log('Connection Successful'));
 
+const path: string = './reviews.json';
 // read json file
-const tours = JSON.parse(
-  fs.readFileSync(
-    'C:/Users/naven/Desktop/complete-node-bootcamp-master/4-natours/starter/dev-data/data/tours.json',
-    'utf-8',
-  ),
-);
+const docs = JSON.parse(fs.readFileSync(path, 'utf-8'));
+console.log(docs);
 
-console.log(tours);
-
-const importData = async () => {
+const importData = async <T>(model: Model<T>) => {
   try {
-    await Tour.create(tours);
+    await model.create(docs, { validateBeforeSave: false });
     console.log('data loaded');
   } catch (err) {
     console.log(err);
@@ -45,9 +42,9 @@ const importData = async () => {
 };
 
 // delete all data
-const deleteData = async () => {
+const deleteData = async <T>(model: Model<T>) => {
   try {
-    await Tour.deleteMany();
+    await model.deleteMany();
     console.log('delete completed');
   } catch (err) {
     console.log(err);
@@ -55,8 +52,8 @@ const deleteData = async () => {
   process.exit();
 };
 
-if (process.argv[2] === '--import') importData();
+if (process.argv[2] === '--import') importData(Review);
 
-if (process.argv[2] === '--delete') deleteData();
+if (process.argv[2] === '--delete') deleteData(Review);
 
 console.log(process.argv);

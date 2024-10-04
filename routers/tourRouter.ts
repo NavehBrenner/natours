@@ -7,23 +7,37 @@ import {
   deleteTour,
   getTourStats,
   getMonthlyPlan,
+  getToursWithin,
+  getDistances,
 } from '../controllers/tourController';
 import { protect, restrictTo } from '../controllers/authController';
-import { postReview } from '../controllers/reviewController';
+import { getAllReviews, postReview } from '../controllers/reviewController';
+import reviewRouter from './reviewRouter';
 
 const tourRouter = express.Router();
 
-tourRouter.route('/monthly-plan/:year').get(getMonthlyPlan);
+tourRouter.use('/:tourId/reviews', reviewRouter);
+
+tourRouter
+  .route('/monthly-plan/:year')
+  .get(protect, restrictTo('admin', 'lead-guide', 'guide'), getMonthlyPlan);
 tourRouter.route('/tour-stats').get(getTourStats);
 
-tourRouter.route('/').get(protect, getAllTours).post(createTour);
+tourRouter
+  .route('/tours-within/:distance/center/:latlng/unit/:unit')
+  .get(getToursWithin);
+
+tourRouter.route('/distances/:latlng/unit/:unit').get(getDistances);
+
+tourRouter
+  .route('/')
+  .get(getAllTours)
+  .post(protect, restrictTo('admin', 'lead-guide'), createTour);
 
 tourRouter
   .route('/:id')
-  .get(protect, getTourById)
-  .patch(updateTour)
-  .delete(restrictTo('admin', 'lead-guide'), deleteTour);
-
-tourRouter.route('/:id/reviews').post(protect, restrictTo('user'), postReview);
+  .get(getTourById)
+  .delete(protect, restrictTo('admin', 'lead-guide'), deleteTour)
+  .patch(protect, restrictTo('admin', 'lead-guide'), updateTour);
 
 export default tourRouter;

@@ -1,4 +1,14 @@
-import { model, Model, ObjectId, Query, Schema } from 'mongoose';
+import mongoose, {
+  model,
+  Model,
+  ObjectId,
+  Query,
+  Schema,
+  Document,
+  Mongoose,
+} from 'mongoose';
+import { ITour, Tour } from './toursModel';
+import { NextFunction } from 'express';
 
 interface IReview extends Document {
   review: string;
@@ -6,7 +16,12 @@ interface IReview extends Document {
   createdAt: Date;
   tour: ObjectId;
   user: ObjectId;
+  statics: { calcAverageRatings(tour: ITour): void };
 }
+
+// const calcAverageRatings = function (tour: ITour) {
+//   return 0;
+// };
 
 const reviewSchema: Schema<IReview> = new Schema<IReview>(
   {
@@ -40,12 +55,49 @@ const reviewSchema: Schema<IReview> = new Schema<IReview>(
   },
 );
 
+reviewSchema.index({ tour: 1, user: 1 }, { unique: true });
+
 reviewSchema.pre(/^find/, function (next) {
   (this as Query<IReview, IReview>).populate({
     path: 'user',
     select: 'name photo',
   });
   next();
+});
+
+reviewSchema.statics.calcAverageRatings = async function (tourId: ObjectId) {
+  const stats = await this.aggregate([
+    {
+      $match: { tour: tourId },
+    },
+    {
+      $group: {
+        _id: '$tour',
+        nRating: { $sum: 1 },
+        avgRating: { $avg: '$rating' },
+      },
+    },
+  ]);
+  await Tour.findByIdAndUpdate(tourId, {
+    ratingsQuantity: stats[0]?.nRating || 0,
+    ratingsAverage: stats[0]?.avgRating || 4.5,
+  });
+};
+
+reviewSchema.post('save', function () {
+  // @ts-ignore
+  this.constructor.calcAverageRatings(this.tour);
+});
+
+reviewSchema.pre(/^findOneAnd/, async function (next) {
+  //@ts-ignore
+  this.r = await Review.findOne(this.getQuery());
+  next();
+});
+
+reviewSchema.post(/^findOneAnd/, async function () {
+  //@ts-ignore
+  await this.r.constructor.calcAverageRatings(this.r.tour);
 });
 
 const Review: Model<IReview> = model('Review', reviewSchema);

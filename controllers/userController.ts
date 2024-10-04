@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import catchAsync from '../utils/catchAsync';
 import { User } from '../models/userModel';
+import { deleteById, getAll, getById, updateById } from './handlerFactory';
 
 const filterObj = (obj: Record<string, any>, ...fields: string[]) => {
   const filteredObj: Record<string, any> = {};
@@ -13,19 +14,10 @@ const filterObj = (obj: Record<string, any>, ...fields: string[]) => {
   return filteredObj;
 };
 
-const getAllUsers = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const users = await User.find();
-
-    res.status(200).json({
-      status: 'success',
-      results: users.length,
-      data: {
-        users,
-      },
-    });
-  },
-);
+const getMe = (req: Request, res: Response, next: NextFunction) => {
+  req.params.id = req.user?.id;
+  next();
+};
 
 const updateMe = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -68,4 +60,16 @@ const deleteMe = catchAsync(
   },
 );
 
-export { getAllUsers, updateMe, deleteMe };
+const getAllUsers = getAll(User);
+const deleteUser = deleteById(User);
+const updateUser = updateById(User);
+const getUserById = getById(User);
+export {
+  getAllUsers,
+  updateMe,
+  deleteMe,
+  deleteUser,
+  updateUser,
+  getUserById,
+  getMe,
+};

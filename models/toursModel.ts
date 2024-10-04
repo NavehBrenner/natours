@@ -69,6 +69,7 @@ const tourSchema: Schema<ITour> = new Schema<ITour>(
       default: 4.5,
       min: [1.0, 'rating must be between 1.0 and 5.0'],
       max: [5.0, 'rating must be between 1.0 and 5.0'],
+      set: (val: number) => Math.round(val * 10) / 10,
     },
     ratingsQuantity: {
       type: Number,
@@ -131,6 +132,11 @@ const tourSchema: Schema<ITour> = new Schema<ITour>(
     toObject: { virtuals: true },
   },
 );
+
+// tourSchema.index({ price: 1 });
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' });
 
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;

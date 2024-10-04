@@ -2,101 +2,25 @@
 // import path from 'node:path';
 // import { fileURLToPath } from 'node:url';
 import e, { Response, Request, NextFunction } from 'express';
-import { Tour } from '../models/toursModel';
-import APIFeatures from '../utils/apiFeatures';
-import AppError from '../utils/appError';
+import { ITour, Tour } from '../models/toursModel';
 import catchAsync from '../utils/catchAsync';
+import {
+  createOne,
+  deleteById,
+  getAll,
+  getById,
+  updateById,
+} from './handlerFactory';
+import AppError from '../utils/appError';
+import { QueryOptions, RootFilterQuery } from 'mongoose';
 
 // const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const getAllTours = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const features = new APIFeatures(Tour.find(), req.query)
-      .filter()
-      .sort()
-      .limitFields()
-      .paginate();
-
-    const tours = await features.query;
-
-    res.status(200).json({
-      status: 'success',
-      results: tours.length,
-      data: {
-        tours,
-      },
-    });
-  },
-);
-
-const getTourById = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const tour = await Tour.findById(req.params.id).populate({
-      path: 'reviews',
-    });
-    if (!tour)
-      throw new AppError(
-        `Object with id (${req.params.id}) could not be found`,
-        404,
-      );
-    res.status(200).json({
-      status: 'success',
-      data: {
-        tour,
-      },
-    });
-  },
-);
-
-const createTour = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const newTour = await Tour.create(req.body);
-
-    res.status(201).json({
-      status: 'success',
-      data: {
-        tour: newTour,
-      },
-    });
-  },
-);
-
-const updateTour = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-
-    if (!tour)
-      throw new AppError(
-        `Object with id (${req.params.id}) could not be found`,
-        404,
-      );
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        tour,
-      },
-    });
-  },
-);
-
-const deleteTour = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const tour = await Tour.findByIdAndDelete(req.params.id);
-    if (!tour)
-      throw new AppError(
-        `Object with id (${req.params.id}) could not be found`,
-        404,
-      );
-    res.status(204).json({
-      status: 'success',
-      data: null,
-    });
-  },
-);
+const getAllTours = getAll(Tour);
+const getTourById = getById(Tour, { path: 'reviews' });
+const createTour = createOne(Tour);
+const updateTour = updateById(Tour);
+const deleteTour = deleteById(Tour);
 
 const getTourStats = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -177,6 +101,76 @@ const getMonthlyPlan = catchAsync(
   },
 );
 
+const getToursWithin = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { distance, latlng, unit } = req.params;
+    const [lat, lng] = latlng.split(',');
+
+    const radius = +distance / (unit === 'mi' ? 3963.2 : 6378.1);
+    if (!lat || !lng)
+      next(
+        new AppError(
+          'Please provide latitude AND longitude in the format: lat,lng',
+          400,
+        ),
+      );
+
+    const tours = await Tour.find({
+      startLocation: {
+        $geoWithin: { $centerSphere: [[lng, lat], radius] },
+      },
+    });
+
+    res.status(200).json({
+      status: 'success',
+      results: tours.length,
+      data: {
+        tours,
+      },
+    });
+  },
+);
+
+const getDistances = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { latlng, unit } = req.params;
+    const [lat, lng] = latlng.split(',');
+
+    const multiplier = 0.001 * (unit === 'mi' ? 0.621 : 1);
+
+    if (!lat || !lng)
+      next(
+        new AppError(
+          'Please provide latitude AND longitude in the format: lat,lng',
+          400,
+        ),
+      );
+
+    const distances = await Tour.aggregate([
+      {
+        $geoNear: {
+          near: { type: 'Point', coordinates: [+lng, +lat] },
+          distanceField: 'distance',
+          distanceMultiplier: multiplier,
+        },
+      },
+      {
+        $project: {
+          distance: 1,
+          name: 1,
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        data: distances,
+      },
+    });
+  },
+);
+
 export {
   getAllTours,
   getTourById,
@@ -185,4 +179,6 @@ export {
   deleteTour,
   getTourStats,
   getMonthlyPlan,
+  getToursWithin,
+  getDistances,
 };
