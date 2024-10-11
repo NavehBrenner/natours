@@ -9,6 +9,8 @@ import {
   getMonthlyPlan,
   getToursWithin,
   getDistances,
+  uploadTourImages,
+  resizeTourImages,
 } from '../controllers/tourController';
 import { protect, restrictTo } from '../controllers/authController';
 import reviewRouter from './reviewRouter';
@@ -37,6 +39,12 @@ tourRouter
   .route('/:id')
   .get(getTourById)
   .delete(protect, restrictTo('admin', 'lead-guide'), deleteTour)
-  .patch(protect, restrictTo('admin', 'lead-guide'), updateTour);
+  .patch(
+    protect,
+    restrictTo('admin', 'lead-guide'),
+    uploadTourImages,
+    resizeTourImages,
+    updateTour,
+  );
 
 export default tourRouter;

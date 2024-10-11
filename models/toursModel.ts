@@ -154,7 +154,7 @@ tourSchema.pre('save', function (next) {
   next();
 });
 
-tourSchema.pre(/^find/, async function (next) {
+tourSchema.pre(/^find/, function (next) {
   (this as Query<ITour, ITour>).populate({
     path: 'guides',
     select: '-__v -passwordChangedAt',

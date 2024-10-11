@@ -4,6 +4,7 @@ import { Tour } from '../models/toursModel';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { User } from '../models/userModel';
 import AppError from '../utils/appError';
+import { Booking } from '../models/bookingModel';
 
 const getOverview = catchAsync(async (req: Request, res: Response) => {
   // get tour data from collection
@@ -63,4 +64,25 @@ const updateUserData = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export { getOverview, getTour, getLoginForm, getAccount, updateUserData };
+const getMyTours = async (req: Request, res: Response, next: NextFunction) => {
+  // find all bookings
+  const bookings = await Booking.find({ user: req.user!.id });
+
+  // find tours with the returned IDs
+  const tourIDs = bookings.map((el) => el.tour);
+  const tours = await Tour.find({ _id: { $in: tourIDs } });
+
+  res.status(200).render('overview', {
+    title: 'My Tours',
+    tours,
+  });
+};
+
+export {
+  getOverview,
+  getTour,
+  getLoginForm,
+  getAccount,
+  updateUserData,
+  getMyTours,
+};

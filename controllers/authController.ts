@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import { IUser, User } from '../models/userModel';
 import catchAsync from '../utils/catchAsync';
 import AppError from '../utils/appError';
-import sendEmail from '../utils/email';
+import { sendEmail, Email } from '../utils/email';
 import crypto from 'crypto';
 
 const signToken = (id: any) => {
@@ -45,6 +45,8 @@ const signUp = catchAsync(
       role: req.body.role,
     });
 
+    const url = `${req.protocol}://${req.get('host')}/me`;
+    await new Email(newUser, url).sendWelcome();
     sendLoginToken(res, newUser, 201);
   },
 );
@@ -179,14 +181,8 @@ const forgotPassword = catchAsync(
 
     const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
 
-    const message = `Forgot your password? Submit a new path request with your new password to ${resetURL}. If you did not forget your password please ignore this email`;
-
     try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Your password reset token (valid for 10 minuets)',
-        message,
-      });
+      await new Email(user, resetURL).sendPasswordReset();
     } catch (err) {
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;

@@ -15,8 +15,10 @@ import {
   getAllUsers,
   getMe,
   getUserById,
+  resizeUserPhoto,
   updateMe,
   updateUser,
+  uploadUserPhoto,
 } from '../controllers/userController';
 
 const userRouter = express.Router();
@@ -30,7 +32,7 @@ userRouter.patch('/resetPassword/:token', resetPassword);
 userRouter.use(protect);
 
 userRouter.patch('/updateMyPassword', updatePassword);
-userRouter.patch('/updateMe', updateMe);
+userRouter.patch('/updateMe', uploadUserPhoto, resizeUserPhoto, updateMe);
 userRouter.get('/me', getMe, getUserById);
 userRouter.delete('/deleteMe', deleteMe);
 

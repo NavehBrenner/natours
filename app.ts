@@ -16,6 +16,7 @@ import reviewRouter from './routers/reviewRouter';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import viewRouter from './routers/viewRouter';
+import bookingRouter from './routers/bookingRouter';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 configDotenv({ path: './config.env' });
@@ -35,6 +36,7 @@ app.use(
       scriptSrc: [
         "'self'",
         'https://unpkg.com', // Allow scripts from unpkg
+        'https://js.stripe.com',
       ], // Only allow scripts from your own domain
       styleSrc: [
         "'self'",
@@ -52,6 +54,7 @@ app.use(
         'http://127.0.0.1', // Allow connections to your local API
         'ws://127.0.0.1:*', // Allow WebSocket connections on any port for localhost
       ], // For external data sources
+      frameSrc: ['https://js.stripe.com'],
     },
   }),
 );
@@ -102,6 +105,7 @@ app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
+app.use('/api/v1/bookings', bookingRouter);
 
 app.all('*', (req: Request, res: Response, next: NextFunction) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

@@ -4,16 +4,18 @@ import {
   getTour,
   getLoginForm,
   getAccount,
-  updateUserData,
+  getMyTours,
 } from '../controllers/viewController';
 import { isLoggedIn, protect } from '../controllers/authController';
+import { createBookingCheckout } from '../controllers/bookingController';
 
 const viewRouter = express.Router();
 
-viewRouter.get('/', isLoggedIn, getOverview);
+viewRouter.get('/', createBookingCheckout, isLoggedIn, getOverview);
 viewRouter.get('/tour/:slug', isLoggedIn, getTour);
 viewRouter.get('/login', isLoggedIn, getLoginForm);
 viewRouter.get('/me', protect, getAccount);
+viewRouter.get('/myTours', protect, getMyTours);
 
 // viewRouter.post('/submit-user-data', protect, updateUserData);
 

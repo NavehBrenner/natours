@@ -9,6 +9,68 @@ import {
   updateById,
 } from './handlerFactory';
 import AppError from '../utils/appError';
+import multer, { FileFilterCallback } from 'multer';
+import sharp from 'sharp';
+
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback,
+) => {
+  if (file.mimetype.startsWith('image')) cb(null, true);
+  else cb(new AppError('Not am image! please only uploda images', 400));
+};
+
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+
+const uploadTourImages = upload.fields([
+  { name: 'imageCover', maxCount: 1 },
+  { name: 'images', maxCount: 3 },
+]);
+
+const resizeTourImages = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  console.log(req.files);
+
+  req.files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+  if (!req.files.imageCover || !req.files.images) return next();
+
+  req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
+
+  await sharp(req.files.imageCover[0].buffer)
+    .resize(2000, 1333)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/tours/${req.body.imageCover}`);
+
+  req.body.images = [];
+  await Promise.all(
+    req.files.images.map(async (file, i) => {
+      req.files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+      const fileName = `tour-${req.params.id}-${Date.now()}-${i + 1}.jpeg`;
+
+      await sharp(req.files?.images[i].buffer)
+        .resize(2000, 1333)
+        .toFormat('jpeg')
+        .jpeg({ quality: 90 })
+        .toFile(`public/img/tours/${fileName}`);
+
+      req.body.images.push(fileName);
+    }),
+  );
+
+  next();
+};
 
 const getAllTours = getAll(Tour);
 const getTourById = getById(Tour, { path: 'reviews' });
@@ -175,4 +237,6 @@ export {
   getMonthlyPlan,
   getToursWithin,
   getDistances,
+  resizeTourImages,
+  uploadTourImages,
 };
