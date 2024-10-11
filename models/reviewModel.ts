@@ -5,10 +5,8 @@ import mongoose, {
   Query,
   Schema,
   Document,
-  Mongoose,
 } from 'mongoose';
 import { ITour, Tour } from './toursModel';
-import { NextFunction } from 'express';
 
 interface IReview extends Document {
   review: string;

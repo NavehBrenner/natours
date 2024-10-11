@@ -1,7 +1,7 @@
 class AppError extends Error {
-  statusCode: number | undefined;
-  status: string | undefined;
-  isOperational: boolean | undefined;
+  statusCode: number;
+  status: string;
+  isOperational: boolean;
   constructor(
     message: string = 'Somthing went wrong',
     statusCode: number = 400,

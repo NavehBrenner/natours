@@ -552,6 +552,9 @@ body {
 }
 
 .marker {
+  position: fixed;
+  bottom: 0;
+  left: -16px;
   background-image: url('../img/pin.png');
   background-size: cover;
   width: 32px;

@@ -5,7 +5,6 @@ import catchAsync from '../utils/catchAsync';
 import AppError from '../utils/appError';
 import sendEmail from '../utils/email';
 import crypto from 'crypto';
-import { request } from 'http';
 
 const signToken = (id: any) => {
   return jwt.sign({ id }, process.env.JWT_SECRET!, {
@@ -73,6 +72,17 @@ const login = catchAsync(
   },
 );
 
+const logout = (req: Request, res: Response) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({
+    status: 'success',
+    message: 'Logged out successfully',
+  });
+};
+
 const protect = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     let token;
@@ -82,7 +92,7 @@ const protect = catchAsync(
       req.headers.authorization.startsWith('Bearer')
     ) {
       token = req.headers.authorization.split(' ')[1];
-    }
+    } else if (req.cookies.jwt) token = req.cookies.jwt;
 
     if (!token)
       return next(
@@ -110,10 +120,35 @@ const protect = catchAsync(
     }
 
     // GRANT ACCESS TO PROTECTED ROUTE
+    res.locals.user = currentUser;
     req.user = currentUser;
     next();
   },
 );
+
+const isLoggedIn = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // check for token
+    if (!req.cookies.jwt) return next();
+
+    // verify token
+    const decoded = jwt.verify(req.cookies.jwt, process.env.JWT_SECRET!);
+
+    // find user
+    const currentUser = await User.findById((decoded as any).id);
+
+    // check user exists and hasnt changed password
+    if (!currentUser) return next();
+    if (currentUser.changedPasswordAfter((decoded as JwtPayload).iat as number))
+      return next();
+
+    // there is logged in
+    res.locals.user = currentUser;
+    next();
+  } catch (err) {
+    next();
+  }
+};
 
 const restrictTo = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -234,7 +269,9 @@ const updatePassword = catchAsync(
 export {
   signUp,
   login,
+  logout,
   protect,
+  isLoggedIn,
   restrictTo,
   forgotPassword,
   resetPassword,

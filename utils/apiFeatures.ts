@@ -1,11 +1,10 @@
-import { json, Request, Response } from 'express';
-import { Document, Query } from 'mongoose';
-import { Tour, ITour } from '../models/toursModel';
+import { Query } from 'mongoose';
+import AppError from './appError';
 
-class APIFeatures {
-  public query: Query<ITour[], ITour>;
+class APIFeatures<T> {
+  public query: Query<T[], T>;
   public reqQuery: any;
-  constructor(query: Query<ITour[], ITour>, reqQuery: any) {
+  constructor(query: Query<T[], T>, reqQuery: any) {
     this.query = query;
     this.reqQuery = reqQuery;
   }
@@ -27,7 +26,7 @@ class APIFeatures {
   sort() {
     if (this.reqQuery.sort) {
       if (typeof this.reqQuery.sort != 'string')
-        throw new Error('Invalid sort field');
+        throw new AppError('Invalid sort field', 500);
       this.query = this.query.sort(this.reqQuery.sort.split(',').join(' '));
     } else this.query = this.query.sort('-createdAt');
 
@@ -37,7 +36,7 @@ class APIFeatures {
   limitFields() {
     if (this.reqQuery.fields) {
       if (typeof this.reqQuery.fields != 'string')
-        throw new Error('Invalid fields');
+        throw new AppError('Invalid fields', 500);
       this.query = this.query.select(this.reqQuery.fields.split(',').join(' '));
     } else this.query = this.query.select('-__v');
 

@@ -1,7 +1,4 @@
-// import fs from 'fs';
-// import path from 'node:path';
-// import { fileURLToPath } from 'node:url';
-import e, { Response, Request, NextFunction } from 'express';
+import { Response, Request, NextFunction } from 'express';
 import { ITour, Tour } from '../models/toursModel';
 import catchAsync from '../utils/catchAsync';
 import {
@@ -12,9 +9,6 @@ import {
   updateById,
 } from './handlerFactory';
 import AppError from '../utils/appError';
-import { QueryOptions, RootFilterQuery } from 'mongoose';
-
-// const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const getAllTours = getAll(Tour);
 const getTourById = getById(Tour, { path: 'reviews' });

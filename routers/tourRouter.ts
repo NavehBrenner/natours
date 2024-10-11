@@ -11,7 +11,6 @@ import {
   getDistances,
 } from '../controllers/tourController';
 import { protect, restrictTo } from '../controllers/authController';
-import { getAllReviews, postReview } from '../controllers/reviewController';
 import reviewRouter from './reviewRouter';
 
 const tourRouter = express.Router();

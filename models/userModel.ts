@@ -2,7 +2,6 @@ import { Schema, Document, Model, model } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { NextFunction } from 'express';
 
 interface IUser extends Document {
   name: string;
@@ -64,9 +63,7 @@ const userSchema: Schema<IUser> = new Schema({
       message: 'Passwords do not match',
     },
   },
-  passwordChangedAt: {
-    type: Number,
-  },
+  passwordChangedAt: Number,
   passwordResetToken: String,
   passwordResetExpires: Date,
 
@@ -95,6 +92,7 @@ userSchema.pre('save', async function (next) {
 userSchema.pre('save', function (next) {
   if (!this.isModified('password') || this.isNew) return next();
 
+  // update timestamp, subtract 1000 (1 sec) to ensure that the password change happend BEFORE the JWT wat created, there is a slight delay when the document is saved to the BD, this delay might cause the JWT.tia (time issued at) to be before the password change, thus making it invalid and requiring user to login again after password reset
   this.passwordChangedAt = Date.now() - 1000;
   next();
 });

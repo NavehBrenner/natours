@@ -1,4 +1,4 @@
-import { Request } from 'express';
+import { request, Request } from 'express';
 import { IUser } from '../models/userModel';
 
 declare global {
