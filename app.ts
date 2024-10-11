@@ -17,6 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import viewRouter from './routers/viewRouter';
 import bookingRouter from './routers/bookingRouter';
+import compression from 'compression';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 configDotenv({ path: './config.env' });
@@ -95,6 +96,7 @@ app.use(
   }),
 );
 
+app.use(compression());
 app.use((req: Request, res: Response, next: NextFunction) => {
   req.requestTime = new Date().toISOString();
   next();

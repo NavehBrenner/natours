@@ -38,8 +38,6 @@ const resizeTourImages = async (
   res: Response,
   next: NextFunction,
 ) => {
-  console.log(req.files);
-
   req.files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
   if (!req.files.imageCover || !req.files.images) return next();
